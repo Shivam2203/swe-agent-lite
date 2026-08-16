@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  swe-agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: swe-agent-lite
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - ENVIRONMENT=development
+    volumes:
+      - ./dummy_repo:/app/dummy_repo
+      - ./chroma_db:/app/chroma_db
+      - ./src:/app/src
+      - ./tests:/app/tests
+    command: python main.py
+    networks:
+      - swe-network
+
+  swe-agent-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: swe-agent-lite-dev
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - ENVIRONMENT=development
+    volumes:
+      - ./:/app
+    command: python -m pytest tests/ -v
+    networks:
+      - swe-network
+
+  # Optional: Add ChromaDB as a separate service
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_db:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+    networks:
+      - swe-network
+
+networks:
+  swe-network:
+    driver: bridge

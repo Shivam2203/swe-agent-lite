@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "containerName": {
+      "type": "string",
+      "defaultValue": "swe-agent-lite",
+      "metadata": {
+        "description": "Name of the container"
+      }
+    },
+    "containerImage": {
+      "type": "string",
+      "defaultValue": "sweagentregistry.azurecr.io/swe-agent-lite:latest",
+      "metadata": {
+        "description": "Container image to deploy"
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "swe-agent-rg",
+      "metadata": {
+        "description": "Resource group name"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2021-03-01",
+      "name": "[parameters('containerName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('containerName')]",
+            "properties": {
+              "image": "[parameters('containerImage')]",
+              "resources": {
+                "requests": {
+                  "cpu": 1.0,
+                  "memoryInGB": 2.0
+                }
+              },
+              "environmentVariables": [
+                {
+                  "name": "GROQ_API_KEY",
+                  "secureValue": ""
+                },
+                {
+                  "name": "ENVIRONMENT",
+                  "value": "production"
+                },
+                {
+                  "name": "LOG_LEVEL",
+                  "value": "INFO"
+                }
+              ]
+            }
+          }
+        ],
+        "osType": "Linux",
+        "restartPolicy": "OnFailure"
+      }
+    }
+  ]
+}

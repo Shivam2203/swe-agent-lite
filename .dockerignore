@@ -1,0 +1,48 @@
+# Virtual environment
+venv/
+env/
+.env
+*.pyc
+__pycache__/
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+tests/
+*.log
+coverage/
+.pytest_cache/
+
+# Data files (exclude large files)
+*.h5
+*.pkl
+*.joblib
+chroma_db/
+*.db
+
+# Documentation
+README.md
+docs/
+*.md
+
+# CI/CD
+.github/
+azure-deploy.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+docker/
+Dockerfile*
+docker-compose*

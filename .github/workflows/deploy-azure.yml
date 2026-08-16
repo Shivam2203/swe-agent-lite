@@ -1,0 +1,67 @@
+name: Deploy to Azure Container Instances
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'main.py'
+      - 'Dockerfile'
+      - 'docker/**'
+
+env:
+  AZURE_RESOURCE_GROUP: swe-agent-rg
+  AZURE_CONTAINER_NAME: swe-agent-lite
+  AZURE_REGISTRY: ${{ secrets.AZURE_REGISTRY }}
+  IMAGE_NAME: swe-agent-lite
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.AZURE_REGISTRY }}
+        username: ${{ secrets.AZURE_USERNAME }}
+        password: ${{ secrets.AZURE_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t $AZURE_REGISTRY/$IMAGE_NAME:${{ github.sha }} -f docker/Dockerfile .
+        docker push $AZURE_REGISTRY/$IMAGE_NAME:${{ github.sha }}
+
+    - name: Deploy to Azure Container Instances
+      run: |
+        az container create \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --name $AZURE_CONTAINER_NAME \
+          --image $AZURE_REGISTRY/$IMAGE_NAME:${{ github.sha }} \
+          --dns-name-label swe-agent-${{ github.sha }} \
+          --restart-policy OnFailure \
+          --environment-variables \
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
+            ENVIRONMENT=production \
+            LOG_LEVEL=INFO \
+          --secure-environment-variables \
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+
+    - name: Get deployment status
+      run: |
+        az container show \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --name $AZURE_CONTAINER_NAME \
+          --query "{State:state, IP:ipAddress.ip, FQDN:ipAddress.fqdn}" \
+          --output table
+
+    - name: Logout from Azure
+      run: az logout
