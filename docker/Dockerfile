@@ -1,4 +1,4 @@
-# Use official Python image with GPU support (for faster embeddings)
+# Use slim Python image for smaller size
 FROM python:3.10-slim
 
 # Set working directory
@@ -26,8 +26,9 @@ USER appuser
 ENV PYTHONUNBUFFERED=1
 ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
 
-# Expose port for potential web server (if added later)
-EXPOSE 8080
+# Health check (optional)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)" || exit 1
 
 # Run the agent
 CMD ["python", "main.py"]

@@ -1,4 +1,3 @@
-# Development Dockerfile with hot-reload and debugging
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -16,15 +15,15 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install development dependencies
+RUN pip install pytest black mypy pylint watchfiles
+
 # Copy the entire project
 COPY . .
-
-# Install development dependencies
-RUN pip install pytest black mypy pylint
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
 # Run with hot-reload for development
-CMD ["python", "-m", "pytest", "tests/"]
+CMD ["python", "-m", "watchfiles", "python main.py", "/app"]
